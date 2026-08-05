@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>實驗室手作電路板：步驟與原理</title>
+  <style>
+    :root {
+      --bg: #f7f3ec;
+      --ink: #1f2523;
+      --muted: #5a635f;
+      --copper: #b76532;
+      --green: #24584a;
+      --blue: #2f5d7c;
+      --yellow: #f1c45b;
+      --panel: #fffaf1;
+      --line: #d8cfc0;
+      --danger: #a33b32;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #1e2221;
+      color: var(--ink);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    main {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+
+    .deck {
+      width: min(100vw, 177.78vh);
+      height: min(56.25vw, 100vh);
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,.32);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 5.2% 6%;
+      display: none;
+      grid-template-rows: auto 1fr auto;
+      gap: 26px;
+      background:
+        linear-gradient(90deg, rgba(183,101,50,.12) 0 1px, transparent 1px 100%),
+        linear-gradient(0deg, rgba(47,93,124,.08) 0 1px, transparent 1px 100%),
+        var(--bg);
+      background-size: 56px 56px;
+    }
+
+    .slide.active { display: grid; }
+
+    .kicker {
+      color: var(--copper);
+      font-weight: 700;
+      letter-spacing: 0;
+      font-size: clamp(16px, 1.5vw, 24px);
+    }
+
+    h1, h2 {
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: clamp(42px, 6.1vw, 92px);
+      max-width: 940px;
+    }
+
+    h2 {
+      font-size: clamp(34px, 4.4vw, 68px);
+      color: var(--green);
+    }
+
+    p {
+      font-size: clamp(20px, 2vw, 32px);
+      line-height: 1.55;
+      margin: 0;
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 1.2em;
+      display: grid;
+      gap: 16px;
+    }
+
+    li {
+      font-size: clamp(22px, 2.25vw, 34px);
+      line-height: 1.42;
+    }
+
+    strong { color: var(--ink); }
+
+    .body {
+      display: grid;
+      align-content: center;
+      gap: 30px;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 34px;
+      align-items: stretch;
+    }
+
+    .card {
+      background: rgba(255,250,241,.86);
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      padding: 28px;
+    }
+
+    .card h3 {
+      margin: 0 0 18px;
+      font-size: clamp(24px, 2.4vw, 36px);
+      color: var(--blue);
+    }
+
+    .card p, .card li {
+      font-size: clamp(18px, 1.65vw, 26px);
+    }
+
+    .process {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .step {
+      min-height: 150px;
+      border: 2px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 20px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .num {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--green);
+      color: white;
+      font-weight: 800;
+    }
+
+    .step b {
+      font-size: clamp(20px, 1.7vw, 28px);
+      color: var(--ink);
+    }
+
+    .step span {
+      font-size: clamp(16px, 1.35vw, 22px);
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: clamp(24px, 2.4vw, 38px);
+      color: var(--ink);
+      background: #ffffffcc;
+      border-left: 8px solid var(--copper);
+      padding: 20px 24px;
+    }
+
+    .pcb {
+      position: absolute;
+      right: 5%;
+      bottom: 8%;
+      width: 36%;
+      aspect-ratio: 1.55;
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 18% 26%, #f7d28a 0 10px, transparent 11px),
+        radial-gradient(circle at 44% 68%, #f7d28a 0 10px, transparent 11px),
+        radial-gradient(circle at 72% 35%, #f7d28a 0 10px, transparent 11px),
+        linear-gradient(90deg, transparent 17%, #f1c45b 18% 20%, transparent 21%),
+        linear-gradient(35deg, transparent 30%, #f1c45b 31% 35%, transparent 36%),
+        linear-gradient(-25deg, transparent 42%, #f1c45b 43% 47%, transparent 48%),
+        #24584a;
+      border: 8px solid #173a32;
+      box-shadow: 0 18px 36px rgba(0,0,0,.18);
+    }
+
+    .caption {
+      font-size: clamp(14px, 1.2vw, 19px);
+      color: var(--muted);
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: clamp(13px, 1.1vw, 18px);
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(36,88,74,.12);
+      color: var(--green);
+      font-weight: 700;
+      font-size: clamp(15px, 1.2vw, 20px);
+    }
+
+    .danger { color: var(--danger); }
+
+    @media (max-width: 760px) {
+      body { overflow: auto; }
+      main { height: auto; min-height: 100vh; }
+      .deck {
+        width: 100vw;
+        height: auto;
+        min-height: 100vh;
+      }
+      .slide {
+        position: relative;
+        min-height: 100vh;
+        padding: 32px 24px;
+      }
+      .slide:not(.active) { display: none; }
+      .two, .process { grid-template-columns: 1fr; }
+      .pcb { display: none; }
+    }
+
+    @media print {
+      body { overflow: visible; background: white; }
+      main { display: block; height: auto; }
+      .deck { width: auto; height: auto; box-shadow: none; }
+      .slide {
+        display: grid !important;
+        position: relative;
+        width: 100vw;
+        height: 56.25vw;
+        page-break-after: always;
+      }
+      .footer { display: none; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="deck" aria-label="實驗室手作電路板介紹簡報">
+    <article class="slide active">
+      <div>
+        <div class="kicker">PCB Lab Fabrication 101</div>
+        <h1>實驗室手作電路板：步驟與原理</h1>
+      </div>
+      <div class="body" style="max-width: 58%;">
+        <p>以感光覆銅板或貼乾膜的覆銅板為主：先用 UV 照光定義圖案，再顯影、蝕刻、鑽孔與焊接。重點不是大量生產，而是快速驗證電路。</p>
+        <div><span class="tag">感光法</span> <span class="tag">照光顯影</span> <span class="tag">原型驗證</span></div>
+      </div>
+      <div class="pcb"></div>
+      <footer class="footer"><span>使用鍵盤 ← → 或空白鍵換頁</span><span>1 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">先釐清：你做的是哪一種 PCB？</div>
+        <h2>手作板和工廠板的差別</h2>
+      </div>
+      <div class="body two">
+        <div class="card">
+          <h3>實驗室手作</h3>
+          <ul>
+            <li>常用單面板，雙面板也可做但對位較難。</li>
+            <li>線寬、孔金屬化、阻焊層品質有限。</li>
+            <li>優點是快、便宜、能當天驗證。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>工廠製板</h3>
+          <ul>
+            <li>可做多層、鍍通孔、阻焊、絲印、表面處理。</li>
+            <li>製程穩定，適合正式樣品與量產前驗證。</li>
+            <li>交期較長，但電氣與機械可靠度高。</li>
+          </ul>
+        </div>
+      </div>
+      <footer class="footer"><span>定位：實驗室快速原型</span><span>2 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">一句話原理</div>
+        <h2>把不需要的銅溶掉，留下導線</h2>
+      </div>
+      <div class="body">
+        <p>覆銅板原本整面都是銅。先用抗蝕層保護要留下的走線，再讓裸露的銅和蝕刻液反應變成可溶物，最後洗掉抗蝕層，就得到銅箔導線。</p>
+        <div class="process">
+          <div class="step"><div class="num">1</div><b>覆銅</b><span>玻纖或電木基材上貼銅箔</span></div>
+          <div class="step"><div class="num">2</div><b>照光</b><span>用底片與 UV 定義要保留的銅</span></div>
+          <div class="step"><div class="num">3</div><b>蝕刻</b><span>裸露銅被氧化並進入溶液</span></div>
+          <div class="step"><div class="num">4</div><b>成板</b><span>鑽孔、修邊、焊接與測試</span></div>
+        </div>
+      </div>
+      <footer class="footer"><span>核心：選擇性移除銅</span><span>3 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">材料與工具</div>
+        <h2>實驗室常見配置</h2>
+      </div>
+      <div class="body two">
+        <div class="card">
+          <h3>耗材</h3>
+          <ul>
+            <li>覆銅板：FR-4 或電木板。</li>
+            <li>抗蝕材料：預塗感光板或感光乾膜。</li>
+            <li>蝕刻液：氯化鐵、過硫酸鈉、氯化銅系統。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>工具</h3>
+          <ul>
+            <li>砂紙或菜瓜布、酒精、透明底片。</li>
+            <li>UV 曝光機、透明底片、顯影槽。</li>
+            <li>塑膠槽、鑽台、萬用表、護目鏡與手套。</li>
+          </ul>
+        </div>
+      </div>
+      <footer class="footer"><span>金屬鹽溶液避免接觸皮膚與排水孔</span><span>4 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">Step 1</div>
+        <h2>電路設計與版圖輸出</h2>
+      </div>
+      <div class="body">
+        <ul>
+          <li><strong>先畫原理圖：</strong>確認接腳、電源、接地、去耦電容與訊號方向。</li>
+          <li><strong>再畫 PCB：</strong>手作板建議線寬與間距保守一點，例如 0.3 mm 以上更穩。</li>
+          <li><strong>輸出底片要注意方向：</strong>感光曝光依底片放置方向決定是否鏡像，銅面接觸底片可減少光暈。</li>
+        </ul>
+      </div>
+      <footer class="footer"><span>設計越保守，製程容錯越高</span><span>5 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">Step 2</div>
+        <h2>清潔覆銅板：讓抗蝕層黏得住</h2>
+      </div>
+      <div class="body two">
+        <div class="card">
+          <h3>步驟</h3>
+          <ul>
+            <li>裁切覆銅板，邊緣去毛邊。</li>
+            <li>用細砂紙或菜瓜布均勻刷銅面。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>原理</h3>
+          <p>銅表面的氧化層、指紋油脂和灰塵會造成抗蝕層附著不良。蝕刻時一旦滲液，細線就會被咬斷或變細。</p>
+        </div>
+      </div>
+      <footer class="footer"><span>清潔品質通常決定成功率</span><span>6 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">Step 3</div>
+        <h2>照光：把線路圖案寫進感光層</h2>
+      </div>
+      <div class="body two">
+        <div class="card">
+          <h3>實作流程</h3>
+          <ul>
+            <li>把 PCB 圖案印在透明底片上，黑色區域負責遮光。</li>
+            <li>底片貼緊感光板銅面，放入 UV 曝光機照光。</li>
+            <li>曝光後先不要碰刮表面，直接進入顯影。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>背後原理</h3>
+          <p>感光層遇到 UV 後會改變溶解性。被光照到與被黑色底片遮住的區域，會在顯影液中呈現不同的保留或溶解結果。</p>
+        </div>
+      </div>
+      <footer class="footer"><span>底片越貼合，線邊越銳利</span><span>7 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">Step 4</div>
+        <h2>顯影：只留下該留下的抗蝕層</h2>
+      </div>
+      <div class="body">
+        <p>感光膜常見的是光聚合材料。以常見負性感光乾膜來說，被 UV 照到的區域會交聯硬化，比較不容易被顯影液洗掉；未曝光區域被溶解，露出待蝕刻的銅。</p>
+        <div class="formula">曝光量 = UV 強度 × 時間</div>
+        <ul>
+          <li>曝光不足：抗蝕層太軟，蝕刻時會脫落。</li>
+          <li>曝光過度：細縫也被硬化，該蝕刻的銅露不出來。</li>
+        </ul>
+      </div>
+      <footer class="footer"><span>顯影後先檢查線寬、缺口、短路</span><span>8 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">Step 5</div>
+        <h2>蝕刻：銅被氧化成離子</h2>
+      </div>
+      <div class="body">
+        <p>蝕刻液的工作不是「洗掉髒東西」，而是讓金屬銅失去電子，變成能留在溶液中的銅離子或錯合物。</p>
+        <div class="formula">Cu(s) → Cu²⁺(aq) + 2e⁻</div>
+        <div class="two">
+          <div class="card">
+            <h3>氯化鐵</h3>
+            <p>Fe³⁺氧化銅，自己被還原成 Fe²⁺。顏色深、便宜、常見，但容易染色。</p>
+          </div>
+          <div class="card">
+            <h3>過硫酸鈉</h3>
+            <p>溶液較清澈，方便觀察，但通常需要控制溫度，反應才夠快。</p>
+          </div>
+        </div>
+      </div>
+      <footer class="footer"><span>攪拌與溫度會影響蝕刻速率</span><span>9 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">Step 6</div>
+        <h2>停止、去膜、鑽孔與上錫</h2>
+      </div>
+      <div class="body">
+        <div class="process">
+          <div class="step"><div class="num">1</div><b>停止反應</b><span>看見多餘銅剛好消失就取出，大量清水沖洗。</span></div>
+          <div class="step"><div class="num">2</div><b>去除抗蝕層</b><span>依材料使用去膜液、酒精、丙酮或細磨。</span></div>
+          <div class="step"><div class="num">3</div><b>鑽孔</b><span>用小鑽頭垂直鑽焊盤，避免焊盤被扯掉。</span></div>
+          <div class="step"><div class="num">4</div><b>保護銅面</b><span>可上錫、助焊劑或防氧化塗層。</span></div>
+        </div>
+        <p>手作雙面板通常沒有鍍通孔，正反面導通要靠元件腳、銅釘、導線或鉚釘處理。</p>
+      </div>
+      <footer class="footer"><span>鑽孔精度會直接影響焊接難度</span><span>10 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">常見失敗模式</div>
+        <h2>看到問題時，從製程倒推</h2>
+      </div>
+      <div class="body two">
+        <div class="card">
+          <h3>線斷或被咬細</h3>
+          <ul>
+            <li>抗蝕層附著不良。</li>
+            <li>蝕刻時間太長。</li>
+            <li>線寬設計太極限。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>短路或殘銅</h3>
+          <ul>
+            <li>曝光或轉印圖案糊掉。</li>
+            <li>顯影不足，銅沒有露出。</li>
+            <li>蝕刻液老化或攪拌不足。</li>
+          </ul>
+        </div>
+      </div>
+      <footer class="footer"><span>每次記錄時間、溫度、濃度，下一片會明顯更穩</span><span>11 / 12</span></footer>
+    </article>
+
+    <article class="slide">
+      <div>
+        <div class="kicker">安全與收尾</div>
+        <h2>化學品不是用完倒掉</h2>
+      </div>
+      <div class="body">
+        <ul>
+          <li><strong class="danger">護目鏡、手套、通風：</strong>蝕刻液與顯影液都可能刺激皮膚與眼睛。</li>
+          <li><strong class="danger">不要用金屬容器：</strong>蝕刻液會和金屬反應，使用塑膠槽較合適。</li>
+          <li><strong class="danger">廢液集中：</strong>含銅廢液屬重金屬污染來源，交由實驗室廢液流程處理。</li>
+          <li><strong>最後測試：</strong>用萬用表做導通與短路檢查，再焊元件，能降低返工風險。</li>
+        </ul>
+        <p>手作 PCB 的價值在快速學會「設計、製程、除錯」三者如何互相牽制。</p>
+      </div>
+      <footer class="footer"><span>結束</span><span>12 / 12</span></footer>
+    </article>
+  </section>
+</main>
+
+<script>
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  let index = 0;
+
+  function show(next) {
+    index = Math.max(0, Math.min(slides.length - 1, next));
+    slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+    location.hash = `slide-${index + 1}`;
+  }
+
+  window.addEventListener("keydown", (event) => {
+    if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+      event.preventDefault();
+      show(index + 1);
+    }
+    if (["ArrowLeft", "PageUp", "Backspace"].includes(event.key)) {
+      event.preventDefault();
+      show(index - 1);
+    }
+    if (event.key === "Home") show(0);
+    if (event.key === "End") show(slides.length - 1);
+  });
+
+  const match = location.hash.match(/slide-(\d+)/);
+  if (match) show(Number(match[1]) - 1);
+</script>
+</body>
+</html>
